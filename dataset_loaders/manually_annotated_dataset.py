@@ -39,7 +39,7 @@ class ManuallyAnnotatedDataset(Dataset):
         img_path = os.path.join(self.folder_path, IMAGE_DIR, image_file_name)
         image = read_image(img_path)
         point_cloud_file_name = f'stereo_point_cloud_{str(file_number)}.npy'
-        point_cloud_np_array = np.load(os.path.join(self.folder_path, PCD_DIR, point_cloud_file_name))
+        point_cloud_np_array = np.load(os.path.join(self.folder_path, PCD_DIR, point_cloud_file_name)).reshape((1024, 1280, 3))
         return image, point_cloud_np_array, mask_annotations
 
     def get_file_number_from_name(self):
