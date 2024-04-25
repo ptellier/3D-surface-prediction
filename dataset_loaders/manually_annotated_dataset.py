@@ -2,6 +2,8 @@ import re
 
 import numpy as np
 import torch
+from numpy import ndarray
+from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision import datasets
 from pycocotools.coco import COCO
@@ -30,7 +32,7 @@ class ManuallyAnnotatedDataset(Dataset):
     def __len__(self):
         return len(self.coco.imgs)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> tuple[Tensor, ndarray, dict]:
         mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[idx]))
         image_file_name = self.coco.loadImgs(ids=[idx])[0]['file_name']
         file_number = find_last_int(image_file_name)
