@@ -1,17 +1,21 @@
+from typing import Callable
 import numpy as np
+from numpy import ndarray
 import open3d.geometry as o3d_geom
 import surface_normals as sn
 
 
 class ClusterNormals():
 
-    def __init__(self, pcd):
+    def __init__(self, pcd, clustering_algo: Callable[[ndarray], float]):
+        self.clustering_fn = clustering_algo
+        self.pcd = pcd
         self.tree = o3d_geom.KDTreeFlann(pcd)
         self.normals = sn.estimate_surface_normals()
     
 
-    def find_knn_radius(self, pcd: np.ndarray, anchor, radius: float):
-        [k, idx, _] = self.tree.search_radius_vector_3d(pcd.points[anchor], radius)
+    def find_knn_radius(self, anchor, radius: float):
+        [k, idx, _] = self.tree.search_radius_vector_3d(self.pcd.points[anchor], radius)
         return idx
 
     #def cluster_normals():
