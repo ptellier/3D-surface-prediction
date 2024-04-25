@@ -12,7 +12,7 @@ class ClusterNormals():
 
     def find_knn_radius(self, pcd: np.ndarray, anchor, radius: float):
         [k, idx, _] = self.tree.search_radius_vector_3d(pcd.points[anchor], radius)
-        return pcd[idx[1:], :]
+        return idx
 
     #def cluster_normals():
 
