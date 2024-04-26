@@ -1,8 +1,10 @@
 import numpy as np
 import torch
-from torch import nn, Tensor
+from numpy import ndarray
+from torch import nn, Tensor, as_tensor
 
 BATCHES_BEFORE_PRINTING_LOSS = 500
+DEFAULT_DTYPE = torch.float32
 
 class NormalsClusterClassifier(nn.Module):
     """
@@ -20,14 +22,19 @@ class NormalsClusterClassifier(nn.Module):
             device: str = None,
     ):
         super().__init__()
-        self._n_inputs = n_inputs,
-        self._max_iter = max_iter,
+        self._n_inputs = n_inputs
+        self._max_iter = max_iter
         self._learning_rate = learning_rate
         self._weight_decay = weight_decay
-        self._init_scale = init_scale,
-        self._batch_size = batch_size,
+        self._init_scale = init_scale
+        self._batch_size = batch_size
         self._device = device
         self.build()
+
+    def cast(self, np_array: ndarray):
+        """Make a tensor of `DEFAULT_DTYPE` from a numpy array stored onto `self._device`."""
+        return as_tensor(np_array, dtype=DEFAULT_DTYPE, device=self._device)
+
 
     def build(self):
         self._linear = nn.Linear(in_features=self._n_inputs, out_features=1)
@@ -38,11 +45,11 @@ class NormalsClusterClassifier(nn.Module):
         prediction = self._linear.forward(X)
         return prediction
 
-    def fit(self, X: Tensor, y: Tensor):
-        for iter_num in range(self.max_iter):
+    def fit(self, X: ndarray, y: ndarray):
+        for iter_num in range(self._max_iter):
             self._optimizer.zero_grad()
             batch_indexes = torch.as_tensor(
-                np.random.choice(X.shape[0], size=self.batch_size, replace=False)
+                np.random.choice(X.shape[0], size=self._batch_size, replace=False)
             )
             yhat = self(X[batch_indexes])
             loss = self._loss_function(yhat, y[batch_indexes])
@@ -53,8 +60,10 @@ class NormalsClusterClassifier(nn.Module):
             if iter_num % BATCHES_BEFORE_PRINTING_LOSS == 0:
                 print(f"Iteration {iter_num:>10,}: loss = {loss:>6.3f}")
 
-    def predict(self, X: Tensor):
+    def predict(self, X: ndarray):
         with torch.no_grad():
+            tensor_X = self.cast(X)
+
             Z = self(X)
             np_Z = Z.cpu().numpy()
             return np.argmax(np_Z, axis=1)

@@ -1,6 +1,10 @@
 import numpy as np
 from numpy import ndarray
+from torch import as_tensor
 
+from utils.NormalsClusterClassifier import NormalsClusterClassifier
+
+TORCH_DEVICE = 'cuda'
 
 def make_dummy_class_data(d: int) -> tuple[ndarray, ndarray]:
     patches_x = [(0, 640), (0, 640), (640, 1280), (640, 1280)]
@@ -24,5 +28,19 @@ def make_dummy_class_data(d: int) -> tuple[ndarray, ndarray]:
 
 if __name__ == '__main__':
     dummy_feature_data, dummy_label_data = make_dummy_class_data(d=6)
-    what = 1+2
+    surface_classifier = NormalsClusterClassifier(
+        n_inputs=6,
+        max_iter=10_000,
+        learning_rate=0.0001,
+        weight_decay=0,
+        init_scale=1,
+        batch_size=1,
+        device=TORCH_DEVICE,
+    )
+
+    X, y = as_tensor(dummy_feature_data), as_tensor(dummy_label_data)
+    surface_classifier.fit(X, y)
+    mask_predictions = surface_classifier.predict(X)
+
+    print('Git rekt pleb')
 
