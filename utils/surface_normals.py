@@ -45,8 +45,7 @@ def estimate_surface_normals(
         o3d_pcd: o3d_geom.PointCloud,
         voxel_down_sample_size: Union[Number, None],
         normal_estimation_radius: Number,
-        orientation_ref: np.ndarray = np.array([0.0, 0.0, 1.0]),
-        inplace: bool = False,
+        orientation_ref: np.ndarray = np.array([0.0, 0.0, 1.0])
 ) -> o3d_geom.PointCloud:
     """Estimate surface normals of an open3d Point Cloud. The point cloud is first down sampled.
     A voxel grid is created where each cube is the size of voxel_down_sample_size. All points that lie within the same cube are averaged into one point.
@@ -57,13 +56,12 @@ def estimate_surface_normals(
         voxel_down_sample_size (Number): voxel cube size for down sampling. None if no down sampling required.
         normal_estimation_radius (Number): radius used to estimate normals
         orientation_ref (np.ndarray, optional): reference orientation for aligning normals. Defaults to np.array([0.0, 0.0, 1.0]).
-        inplace (bool, optional): true if wanting to alter the point cloud passed in. Otherwise a new deepcopy point cloud is returned. Defaults to False
 
     Returns:
         o3d_geom.PointCloud: an open3d point cloud with normals
     """
 
-    o3d_pcd_estimation = copy.deepcopy(o3d_pcd) if not inplace else o3d_pcd
+    o3d_pcd_estimation = copy.deepcopy(o3d_pcd)
 
     if voxel_down_sample_size is not None:
         o3d_pcd_estimation = o3d_pcd.voxel_down_sample(voxel_size=voxel_down_sample_size)

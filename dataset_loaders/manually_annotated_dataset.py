@@ -1,13 +1,9 @@
 import re
-
 import numpy as np
-import torch
 from numpy import ndarray
 from torch import Tensor
 from torch.utils.data import Dataset
-from torchvision import datasets
 from pycocotools.coco import COCO
-
 import os
 from torchvision.io import read_image
 
