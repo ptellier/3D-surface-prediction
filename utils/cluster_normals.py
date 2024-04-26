@@ -4,7 +4,7 @@ from numpy import ndarray
 import open3d.geometry as o3d_geom
 from open3d.geometry import PointCloud
 from utils.surface_normals import estimate_surface_normals
-from torch_kmeans import KMeans, CosineSimilarity
+from torch_kmeans import KMeans, CosineSimilarity, SoftKMeans
 import torch 
 
 
@@ -48,29 +48,42 @@ class ClusterNormals:
     """
     def cluster_normals(self, radius, k):
         n = 1 # change this to len(self.pcd)
+        # assuming k is always in order 1,2,3
         sse = np.zeros((n, len(k)))
+        
         for a in range(n):
             r = radius
-            # k = k
             # don't use a k value of 1 since it throws an error saying k=1 is ambiguous
-            k = k
-            bs = len(k)
+            # k = k
+            # bs = len(k)
             pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
-            model = KMeans(distance=CosineSimilarity, max_iter=100)
+            model = SoftKMeans(distance=CosineSimilarity, max_iter=100)
+
 
             # Normals of the points within the radius
+            bs = 1
             selected_points = np.asarray(self.pcd.normals)[pc_in_radius_idx]
+            sse[a][0] = self.kmeans_one_cluster(selected_points)
             pc_in_radius = torch.from_numpy(np.tile((np.asarray(selected_points)), (bs, 1, 1)))
+            for K in k[1:]:    
+                result = model(x=pc_in_radius, k=K)
+                # print(result.labels)
+                # print(result.inertia.cpu().numpy().shape) 1 x len(selected_points) x k
 
-
-            result = model(x=pc_in_radius, k=torch.tensor(k))
-            print(result.labels)
-            print(result.inertia)
-
-            # convert tensors to numpy array and save
-            sse[a] = result.inertia.cpu().numpy()
+                # extract the distance of the point to it's own cluster center and sum
+                arr = result.inertia.cpu().numpy()[0]
+                sum = np.sum(np.max(arr, axis=1))
+                # convert tensors to numpy array and save
+                sse[a][K-1] = sum
 
         print(sse)
+    
+    def kmeans_one_cluster(self, x: np.ndarray):
+        centroid = np.mean(x)
+        centroids = np.full((len(x), 3), centroid)
+        # take the dot product of every point with the center and add them up to get sum of similarity indices
+        similarity_sum = np.sum(x * centroids)
+        return similarity_sum
 
 
 
