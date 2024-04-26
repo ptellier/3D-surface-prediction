@@ -29,20 +29,32 @@ class ClusterNormals:
         )
         self._kd_tree = o3d_geom.KDTreeFlann(self._pcd)
 
+    """
+        finds nearest points within radius of anchor using kdtree 
+        anchor: index of anchor in self.pcd
+        radius: radius within which we want to look for points
+    """
     def find_knn_radius(self, anchor: int, radius: float):
         num_points, idx, coordinates = self._kd_tree.search_radius_vector_3d(query=self._pcd.points[anchor],
                                                                              radius=radius)
         return idx
+    
 
+    """
+    for each point cloud point we have:
+        find the points with a radius using knn_radius
+        find normals of those points using estimate_surface_normals
+        cluster these normals
+    """
     def cluster_normals(self, radius, k):
-
-        for a in range(1):
+        n = 1 # change this to len(self.pcd)
+        sse = np.zeros((n, len(k)))
+        for a in range(n):
             r = radius
             # k = k
             # don't use a k value of 1 since it throws an error saying k=1 is ambiguous
-            k = [2,3] 
+            k = k
             bs = len(k)
-            print(torch.tensor(k, dtype=torch.int64))
             pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
             model = KMeans(distance=CosineSimilarity, max_iter=100)
 
@@ -55,15 +67,10 @@ class ClusterNormals:
             print(result.labels)
             print(result.inertia)
 
+            # convert tensors to numpy array and save
+            sse[a] = result.inertia.cpu().numpy()
 
-
-        """
-        for each point cloud point we have:
-            find the points with a radius using knn_radius
-            find normals of those points using estimate_surface_normals
-            cluster these normals
-        """
-        pass
+        print(sse)
 
 
 

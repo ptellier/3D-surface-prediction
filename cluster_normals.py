@@ -23,8 +23,8 @@ if __name__ == '__main__':
     )
 
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
-
-    cluster_normals.cluster_normals(radius=0.02, k=3)
+    k = [2,3]
+    cluster_normals.cluster_normals(radius=0.02, k=k)
 
     # o3d.visualization.draw_geometries([cluster_normals.pcd])
 
