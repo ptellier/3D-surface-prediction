@@ -38,15 +38,23 @@ class ClusterNormals:
 
         for a in range(1):
             r = radius
-            k = k
+            # k = k
+            # don't use a k value of 1 since it throws an error saying k=1 is ambiguous
+            k = [2,3] 
+            bs = len(k)
+            print(torch.tensor(k, dtype=torch.int64))
             pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
-            model = KMeans(n_clusters=k, distance=CosineSimilarity, max_iter=100)
+            model = KMeans(distance=CosineSimilarity, max_iter=100)
 
+            # Normals of the points within the radius
             selected_points = np.asarray(self.pcd.normals)[pc_in_radius_idx]
+            pc_in_radius = torch.from_numpy(np.tile((np.asarray(selected_points)), (bs, 1, 1)))
 
-            pc_in_radius = torch.from_numpy(np.asarray(selected_points))[None, :, :]
-            labels = model.fit_predict(pc_in_radius)
-            print(labels)
+
+            result = model(x=pc_in_radius, k=torch.tensor(k))
+            print(result.labels)
+            print(result.inertia)
+
 
 
         """
@@ -56,6 +64,8 @@ class ClusterNormals:
             cluster these normals
         """
         pass
+
+
 
     @property
     def pcd(self):
