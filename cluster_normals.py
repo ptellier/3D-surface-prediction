@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
 
-    idx = cluster_normals.find_knn_radius(anchor=1500, radius=0.05)
-    np.asarray(cluster_normals.pcd.colors)[idx[1:], :] = [0, 0, 1]
+    cluster_normals.cluster_normals(radius=0.02, k=3)
 
-    o3d.visualization.draw_geometries([cluster_normals.pcd])
+    # o3d.visualization.draw_geometries([cluster_normals.pcd])
+
