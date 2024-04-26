@@ -4,6 +4,9 @@ from numpy import ndarray
 import open3d.geometry as o3d_geom
 from open3d.geometry import PointCloud
 from utils.surface_normals import estimate_surface_normals
+from torch_kmeans import KMeans, CosineSimilarity
+import torch 
+
 
 
 class ClusterNormals:
@@ -33,6 +36,15 @@ class ClusterNormals:
         return idx
 
     def cluster_normals(self):
+
+        for a in range(len(self.pcd.points)):
+            r = 0.2
+            k = 3
+            pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
+            model = KMeans(n_clusters=k, distance=CosineSimilarity, max_iter=100)
+            pc_in_radius = torch.from_numpy(self.pcd.points[pc_in_radius_idx, : ])
+            labels = model.fit_predict(pc_in_radius)
+
         """
         for each point cloud point we have:
             find the points with a radius using knn_radius
