@@ -74,16 +74,17 @@ class ClusterNormals:
                 arr = result.inertia.cpu().numpy()[0]
                 sum = np.sum(np.max(arr, axis=1))
                 # convert tensors to numpy array and save
-                sse[a][K-1] = sum
+                sse[a][K-1] = sum/len(selected_points)
 
         print(sse)
     
     def kmeans_one_cluster(self, x: np.ndarray):
-        centroid = np.mean(x)
+        # centroid = x[np.random.randint(0, len(x))]
+        centroid = np.mean(x, axis=0)
         centroids = np.full((len(x), 3), centroid)
         # take the dot product of every point with the center and add them up to get sum of similarity indices
         similarity_sum = np.sum(x * centroids)
-        return similarity_sum
+        return similarity_sum/len(x)
 
 
 
