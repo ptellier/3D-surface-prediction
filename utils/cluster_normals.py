@@ -1,13 +1,14 @@
+import pickle
 from typing import Callable
 import numpy as np
 from numpy import ndarray
 import open3d.geometry as o3d_geom
 from open3d.geometry import PointCloud
 from utils.surface_normals import estimate_surface_normals
-from torch_kmeans import KMeans, CosineSimilarity, SoftKMeans
+from torch_kmeans import CosineSimilarity, SoftKMeans
 import torch 
 
-
+PRINT_CLUSTERING_MESSAGES = False
 
 class ClusterNormals:
 
@@ -20,8 +21,7 @@ class ClusterNormals:
                  ):
         self._clustering_fn = clustering_fn
         self._pcd = pcd
-
-        self._pcd = estimate_surface_normals(
+        self._pcd, self._downsample_index_trace = estimate_surface_normals(
             self._pcd,
             voxel_down_sample_size=voxel_down_sample_size,
             normal_estimation_radius=normal_estimation_radius,
@@ -59,7 +59,7 @@ class ClusterNormals:
             r = radius
 
             pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
-            model = SoftKMeans(distance=CosineSimilarity, max_iter=100)
+            model = SoftKMeans(distance=CosineSimilarity, max_iter=100, verbose=PRINT_CLUSTERING_MESSAGES)
 
             # Normals of the points within the radius
             bs = 1
@@ -73,14 +73,20 @@ class ClusterNormals:
             pc_in_radius = torch.from_numpy(np.tile((np.asarray(selected_points)), (bs, 1, 1)))
             for K in k[1:]:    
                 result = model(x=pc_in_radius, k=K)
-                # extract the distance of the point to it's own cluster center and sum
+                # extract the distance of the point to its own cluster center and sum
                 arr = result.inertia.cpu().numpy()[0]
                 sum = np.sum(np.max(arr, axis=1))
 
                 # convert tensors to numpy array and save
                 pcs[a][K-1] = sum/len(selected_points)
+        self.save_downsampling_index_trace(file_path='./datasets/index_trace.pkl')
         np.save('./datasets/cluster_similarity', pcs)
         np.save('./datasets/neighbours_per_point', npp)
+
+    def save_downsampling_index_trace(self, file_path: str):
+        with open(file_path, 'wb') as f:
+            index_trace_np_array_list = [np.asarray(int_vector) for int_vector in self._downsample_index_trace]
+            pickle.dump(index_trace_np_array_list, f)
     
     def kmeans_one_cluster(self, x: np.ndarray):
         # centroid = x[np.random.randint(0, len(x))]
@@ -89,8 +95,6 @@ class ClusterNormals:
         # take the dot product of every point with the center and add them up to get sum of similarity indices
         similarity_sum = np.sum(x * centroids)
         return similarity_sum/len(x)
-
-
 
     @property
     def pcd(self):
