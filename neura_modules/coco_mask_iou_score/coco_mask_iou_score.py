@@ -51,14 +51,14 @@ class CocoMaskIoUScore(NeuraModule):
         COCO dataset instance for detected masks.
     coco_gt: COCO
         COCO dataset instance for ground-truth masks.
-    coco_gt_instance_segmentations: COCO
-        TODO
+    coco_gt_instances: COCO
+        COCO dataset instance for ground-truth instance segmentation masks of the bin objects.
     dt_dataset_path: str
         Path to the detected mask dataset.
     gt_dataset_path: str
         Path to the ground-truth mask dataset.
     gt_instance_segmentations_path: str
-        TODO
+        Path to the ground-truth instance segmentation masks dataset.
     images_path: str
         Path to the folder containing all images for both datasets.
     selected_img_ids: list[int]
@@ -69,7 +69,7 @@ class CocoMaskIoUScore(NeuraModule):
     plot_masks: bool
         Whether to create a matplotlib figure for each selected image.
     restrict_masks: bool
-        TODO
+        Whether to preprocess ground-truth masks to remove mask portions not in their segmentation masks.
     dt_to_gt_category_ids: dict[int, list[int]]
         Mapping from category IDs in the detected COCO dataset to the ground-truth COCO dataset.
     category_id_to_dilation_structuring_element: dict[int, cv.Mat]
