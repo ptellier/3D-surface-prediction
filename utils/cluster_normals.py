@@ -79,8 +79,8 @@ class ClusterNormals:
 
                 # convert tensors to numpy array and save
                 pcs[a][K-1] = sum/len(selected_points)
-        np.save('./datasets/clusters', npp)
-        np.save('./datasets/clusters', pcs)
+        np.save('./datasets/cluster_similarity', pcs)
+        np.save('./datasets/neighbours_per_point', npp)
     
     def kmeans_one_cluster(self, x: np.ndarray):
         # centroid = x[np.random.randint(0, len(x))]
