@@ -31,7 +31,7 @@ class ManuallyAnnotatedDataset(Dataset):
         return len(self.coco.imgs)
 
     def __getitem__(self, idx) -> tuple[Tensor, ndarray, dict, ndarray, ndarray]:
-        mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[idx]))
+        gt_mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[idx]))
         image_file_name = self.coco.loadImgs(ids=[idx])[0]['file_name']
         file_number = find_last_int(image_file_name)
         img_path = os.path.join(self.folder_path, IMAGE_DIR, image_file_name)
@@ -43,7 +43,7 @@ class ManuallyAnnotatedDataset(Dataset):
         cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{str(file_number)}', CLUSTER_DISTANCES_DIR, shape=(DOWNSAMPLED_NUM_POINTS, 3))
         num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{str(file_number)}', NUMBER_OF_NEIGHBOURS_DIR, shape=(DOWNSAMPLED_NUM_POINTS,))
 
-        return image, point_cloud_np_array, mask_annotations, cluster_distances_np_array, num_neighbours_np_array
+        return image, point_cloud_np_array, gt_mask_annotations, cluster_distances_np_array, num_neighbours_np_array
 
     def load_npy_file(self, file_name: str, folder_name: str, shape=None) -> ndarray:
         file_name = file_name + '.npy'
