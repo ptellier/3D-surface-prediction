@@ -3,7 +3,7 @@ import torch
 from numpy import ndarray
 from torch import nn, Tensor, as_tensor
 
-BATCHES_BEFORE_PRINTING_LOSS = 500
+BATCHES_BEFORE_PRINTING_LOSS = 10
 DEFAULT_DTYPE = torch.float32
 
 class NormalsClusterClassifier(nn.Module):
@@ -14,8 +14,9 @@ class NormalsClusterClassifier(nn.Module):
     def __init__(
             self,
             n_inputs: int,
-            max_iter: int = 10_000,
-            learning_rate: float = 0.0001,
+            n_classes: int,
+            max_iter: int,
+            learning_rate: float,
             weight_decay: float = 0,
             init_scale: int = 1,
             batch_size: int = 1,
@@ -23,6 +24,7 @@ class NormalsClusterClassifier(nn.Module):
     ):
         super().__init__()
         self._n_inputs = n_inputs
+        self._n_classes = n_classes
         self._max_iter = max_iter
         self._learning_rate = learning_rate
         self._weight_decay = weight_decay
@@ -31,13 +33,12 @@ class NormalsClusterClassifier(nn.Module):
         self._device = device
         self.build()
 
-    def cast(self, np_array: ndarray):
+    def cast(self, np_array: ndarray, dtype=DEFAULT_DTYPE):
         """Make a tensor of `DEFAULT_DTYPE` from a numpy array stored onto `self._device`."""
-        return as_tensor(np_array, dtype=DEFAULT_DTYPE, device=self._device)
-
+        return as_tensor(np_array, dtype=dtype, device=self._device)
 
     def build(self):
-        self._linear = nn.Linear(in_features=self._n_inputs, out_features=1)
+        self._linear = nn.Linear(in_features=self._n_inputs, out_features=self._n_classes, device=self._device)
         self._loss_function = nn.CrossEntropyLoss()
         self._optimizer = torch.optim.SGD(self.parameters(), lr=self._learning_rate, weight_decay=self._weight_decay)
 
@@ -46,6 +47,9 @@ class NormalsClusterClassifier(nn.Module):
         return prediction
 
     def fit(self, X: ndarray, y: ndarray):
+        h, w, d = X.shape
+        X = self.cast(X.reshape(h*w, d))
+        y = self.cast(y.reshape(h*w), dtype=torch.int64)
         for iter_num in range(self._max_iter):
             self._optimizer.zero_grad()
             batch_indexes = torch.as_tensor(
@@ -62,8 +66,8 @@ class NormalsClusterClassifier(nn.Module):
 
     def predict(self, X: ndarray):
         with torch.no_grad():
-            tensor_X = self.cast(X)
-
+            h, w, d = X.shape
+            X = self.cast(X.reshape(h*w, d))
             Z = self(X)
-            np_Z = Z.cpu().numpy()
-            return np.argmax(np_Z, axis=1)
+            predictions = torch.argmax(Z, dim=1).reshape(h, w)
+            return predictions.cpu().numpy()

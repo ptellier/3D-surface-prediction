@@ -2,13 +2,11 @@ import numpy as np
 import open3d as o3d
 
 from dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
-from utils.NormalsClusterClassifier import NormalsClusterClassifier
 from utils.cluster_normals import ClusterNormals
 from utils.surface_normals import pcd_img_to_o3d_pcd
 
 DATASET_FOLDER_PATH = './datasets/manual_dataset/'
 EXAMPLE_INDEX = 1
-
 TORCH_DEVICE = 'cuda'
 
 
@@ -27,18 +25,8 @@ if __name__ == '__main__':
     )
 
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
-    k = [2,3]
+    k = [1,2,3]
     cluster_normals.cluster_normals(radius=0.02, k=k)
-
-    surface_classifier = NormalsClusterClassifier(
-        n_inputs=6,
-        max_iter=10_000,
-        learning_rate=0.0001,
-        weight_decay=0,
-        init_scale=1,
-        batch_size=1,
-        device=TORCH_DEVICE,
-    )
 
     # o3d.visualization.draw_geometries([cluster_normals.pcd])
 

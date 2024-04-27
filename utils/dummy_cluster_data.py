@@ -10,7 +10,7 @@ def make_dummy_class_data(d: int) -> tuple[ndarray, ndarray]:
     patches_x = [(0, 640), (0, 640), (640, 1280), (640, 1280)]
     patches_y = [(0, 512), (512, 1024), (0, 512), (512, 1024)]
     patches_fills = [np.random.rand(d)*2, np.random.rand(d)*2, np.random.rand(d)*2, np.random.rand(d)*2]
-    patches_classes = [1, 2, 3, 4]
+    patches_classes = [0, 1, 2, 3]
 
     features = np.zeros((1024, 1280, d))
     labels = np.zeros((1024, 1280))
@@ -30,17 +30,16 @@ if __name__ == '__main__':
     dummy_feature_data, dummy_label_data = make_dummy_class_data(d=6)
     surface_classifier = NormalsClusterClassifier(
         n_inputs=6,
-        max_iter=10_000,
-        learning_rate=0.0001,
-        weight_decay=0,
+        n_classes=4,
+        max_iter=400,
+        learning_rate=0.05,
+        weight_decay=0.1,
         init_scale=1,
-        batch_size=1,
+        batch_size=1000,
         device=TORCH_DEVICE,
     )
 
     X, y = as_tensor(dummy_feature_data), as_tensor(dummy_label_data)
     surface_classifier.fit(X, y)
     mask_predictions = surface_classifier.predict(X)
-
-    print('Git rekt pleb')
 
