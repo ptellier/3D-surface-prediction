@@ -12,6 +12,8 @@ DOWNLOAD_URL = 'https://drive.google.com/drive/folders/1-tls6KQyJnQQYwXv9Wmaoey3
 IMAGE_DIR = 'images'
 PCD_DIR = 'point_clouds'
 JSON_PATH = 'annotations/surface_annotations.json'
+CLUSTER_DISTANCES_DIR = 'cluster_distances'
+NUMBER_OF_NEIGHBOURS_DIR = 'number_of_neighbours'
 LAST_NUMBER_PATTERN = re.compile('\d+')
 
 DATASET_FOLDER_PATH = './datasets/manual_dataset/'
@@ -28,18 +30,27 @@ class ManuallyAnnotatedDataset(Dataset):
     def __len__(self):
         return len(self.coco.imgs)
 
-    def __getitem__(self, idx) -> tuple[Tensor, ndarray, dict]:
-        mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[idx]))
+    def __getitem__(self, idx) -> tuple[Tensor, ndarray, dict, ndarray, ndarray]:
+        gt_mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[idx]))
         image_file_name = self.coco.loadImgs(ids=[idx])[0]['file_name']
         file_number = find_last_int(image_file_name)
         img_path = os.path.join(self.folder_path, IMAGE_DIR, image_file_name)
         image = read_image(img_path)
-        point_cloud_file_name = f'stereo_point_cloud_{str(file_number)}.npy'
-        point_cloud_np_array = np.load(os.path.join(self.folder_path, PCD_DIR, point_cloud_file_name)).reshape((1024, 1280, 3))
-        return image, point_cloud_np_array, mask_annotations
 
-    def get_file_number_from_name(self):
-        raise NotImplementedError()
+        DOWNSAMPLED_NUM_POINTS = 19017
+
+        point_cloud_np_array = self.load_npy_file(f'stereo_point_cloud_{str(file_number)}', PCD_DIR, shape=(1024, 1280, 3))
+        cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{str(file_number)}', CLUSTER_DISTANCES_DIR, shape=(DOWNSAMPLED_NUM_POINTS, 3))
+        num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{str(file_number)}', NUMBER_OF_NEIGHBOURS_DIR, shape=(DOWNSAMPLED_NUM_POINTS,))
+
+        return image, point_cloud_np_array, gt_mask_annotations, cluster_distances_np_array, num_neighbours_np_array
+
+    def load_npy_file(self, file_name: str, folder_name: str, shape=None) -> ndarray:
+        file_name = file_name + '.npy'
+        np_array = np.load(os.path.join(self.folder_path, folder_name, file_name))
+        if shape is not None:
+            np_array = np_array.reshape(shape)
+        return np_array
 
 
 def find_last_int(string: str) -> int:
@@ -55,7 +66,7 @@ if __name__ == '__main__':
     # NOTE**: index starts at 1
     index = 1
     manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
-    image_1, point_cloud_np_array_1, mask_annotations_1 = manual_dataset[index]
+    image_1, point_cloud_np_array_1, mask_annotations_1, cluster_dist_1, num_neigh = manual_dataset[index]
 
     print('image_1: ')
     print(image_1)
@@ -69,3 +80,10 @@ if __name__ == '__main__':
     print(mask_annotations_1)
     print()
 
+    print('cluster_distances_1: ')
+    print(cluster_dist_1)
+    print()
+
+    print('num_neighbours_1: ')
+    print(num_neigh)
+    print()

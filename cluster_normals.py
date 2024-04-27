@@ -12,7 +12,7 @@ TORCH_DEVICE = 'cuda'
 
 if __name__ == '__main__':
     manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
-    image, point_cloud_np_array, mask_annotations = manual_dataset[EXAMPLE_INDEX]
+    image, point_cloud_np_array, gt_annotations_, cluster_distances_np_array, num_neighbours_np_array = manual_dataset[EXAMPLE_INDEX]
 
     pcd = pcd_img_to_o3d_pcd(point_cloud_np_array)
 
