@@ -4,9 +4,8 @@ from numpy import ndarray
 import open3d.geometry as o3d_geom
 from open3d.geometry import PointCloud
 from utils.surface_normals import estimate_surface_normals
-from torch_kmeans import KMeans, CosineSimilarity
+from torch_kmeans import CosineSimilarity, SoftKMeans
 import torch 
-
 
 
 class ClusterNormals:
@@ -38,7 +37,6 @@ class ClusterNormals:
         num_points, idx, coordinates = self._kd_tree.search_radius_vector_3d(query=self._pcd.points[anchor],
                                                                              radius=radius)
         return idx
-    
 
     """
     for each point cloud point we have:
@@ -48,19 +46,19 @@ class ClusterNormals:
     """
     def cluster_normals(self, radius, k):
         n = 1 # change this to len(self.pcd)
-        sse = np.zeros((n, len(k)))
+        batch_size = 100
+        sse = np.zeros((n, batch_size))
         for a in range(n):
             r = radius
             # k = k
             # don't use a k value of 1 since it throws an error saying k=1 is ambiguous
             k = k
-            bs = len(k)
             pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
-            model = KMeans(distance=CosineSimilarity, max_iter=100)
+            model = SoftKMeans(distance=CosineSimilarity, max_iter=100)
 
             # Normals of the points within the radius
             selected_points = np.asarray(self.pcd.normals)[pc_in_radius_idx]
-            pc_in_radius = torch.from_numpy(np.tile((np.asarray(selected_points)), (bs, 1, 1)))
+            pc_in_radius = torch.from_numpy(np.tile((np.asarray(selected_points)), (batch_size, 1, 1)))
 
 
             result = model(x=pc_in_radius, k=torch.tensor(k))
@@ -68,11 +66,9 @@ class ClusterNormals:
             print(result.inertia)
 
             # convert tensors to numpy array and save
-            sse[a] = result.inertia.cpu().numpy()
+            # sse[a] = result.inertia.cpu().numpy()
 
         print(sse)
-
-
 
     @property
     def pcd(self):
