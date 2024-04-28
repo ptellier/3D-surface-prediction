@@ -40,10 +40,11 @@ class ManuallyAnnotatedDataset(Dataset):
         DOWNSAMPLED_NUM_POINTS = 19017
 
         point_cloud_np_array = self.load_npy_file(f'stereo_point_cloud_{str(file_number)}', PCD_DIR, shape=(1024, 1280, 3))
-        cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{str(file_number)}', CLUSTER_DISTANCES_DIR, shape=(DOWNSAMPLED_NUM_POINTS, 3))
-        num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{str(file_number)}', NUMBER_OF_NEIGHBOURS_DIR, shape=(DOWNSAMPLED_NUM_POINTS,))
+        # cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{str(file_number)}', CLUSTER_DISTANCES_DIR, shape=(DOWNSAMPLED_NUM_POINTS, 3))
+        # num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{str(file_number)}', NUMBER_OF_NEIGHBOURS_DIR, shape=(DOWNSAMPLED_NUM_POINTS,))
 
-        return image, point_cloud_np_array, gt_mask_annotations, cluster_distances_np_array, num_neighbours_np_array
+        return image, point_cloud_np_array, gt_mask_annotations
+    # , cluster_distances_np_array, num_neighbours_np_array
 
     def load_npy_file(self, file_name: str, folder_name: str, shape=None) -> ndarray:
         file_name = file_name + '.npy'

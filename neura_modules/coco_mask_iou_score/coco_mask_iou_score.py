@@ -1,5 +1,6 @@
 from itertools import chain
-import cv2 as cv
+
+import cv2
 import torch
 from matplotlib.figure import Figure
 from pycocotools.coco import COCO
@@ -11,15 +12,11 @@ from matplotlib.patches import Patch
 from matplotlib.axes import Axes
 from torch import Tensor
 
-from neura_modules.abstract_neura_module import NeuraModule
-
 from neura_modules.coco_mask_iou_score.coco_tensor_dict import CocoTensorDict
-from neura_modules.utils.data_type import DataType
 
-CONFIGS_REQUIRED = [("plot_masks", DataType.BOOL), ("restrict_masks", DataType.BOOL), ("dilations", DataType.DICT_STRING_INT)]
-INPUTS_REQUIRED = ['dt_dataset_path', 'gt_dataset_path', 'gt_instance_segmentations_path', 'images_path', 'dt_to_gt_categories',
-                   'selected_dt_categories', 'selected_image_ids']
-OUTPUTS_AVAILABLE = ['scores', 'figures']
+SELECTED_GT_CAT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+SELECTED_GT_CAT_NAMES = ['convex', 'flat', 'spherical_grasp', 'edge', 'corner', 'flat_edge',
+                         'flat_corner', 'rod_like', 'convex_edge', 'convex_rim', 'unknown', 'bumpy']
 
 TORCH_DEVICE = 'cuda'
 
@@ -43,22 +40,18 @@ INDEX_TO_COLOR = {  # RGB colors
 INSTANCE_ID = 1
 INSTANCE_NAME = 'object_instance'
 
-class CocoMaskIoUScore(NeuraModule):
+class CocoMaskIoUScore:
     """
     Attributes
     ----------
-    coco_dt: COCO
-        COCO dataset instance for detected masks.
     coco_gt: COCO
         COCO dataset instance for ground-truth masks.
-    coco_gt_instance_segmentations: COCO
-        TODO
-    dt_dataset_path: str
-        Path to the detected mask dataset.
+    coco_gt_instances: COCO
+        COCO dataset instance for ground-truth instance segmentation masks of the bin objects.
     gt_dataset_path: str
         Path to the ground-truth mask dataset.
     gt_instance_segmentations_path: str
-        TODO
+        Path to the ground-truth instance segmentation masks dataset.
     images_path: str
         Path to the folder containing all images for both datasets.
     selected_img_ids: list[int]
@@ -69,68 +62,51 @@ class CocoMaskIoUScore(NeuraModule):
     plot_masks: bool
         Whether to create a matplotlib figure for each selected image.
     restrict_masks: bool
-        TODO
-    dt_to_gt_category_ids: dict[int, list[int]]
-        Mapping from category IDs in the detected COCO dataset to the ground-truth COCO dataset.
-    category_id_to_dilation_structuring_element: dict[int, cv.Mat]
+        Whether to preprocess ground-truth masks to remove mask portions not in their segmentation masks.
+    category_id_to_dilation_structuring_element: dict[int, cv2.Mat]
         Mapping from category IDs in the detected COCO dataset to an OpenCV structuring element to perform dilations.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.configs_reqd = CONFIGS_REQUIRED
-        self.inputs_reqd = INPUTS_REQUIRED
-        self.outputs_available = OUTPUTS_AVAILABLE
+    def __init__(self,
+                 gt_dataset_path: str,
+                 gt_instance_segmentations_path: str,
+                 images_path: str,
+                 selected_img_ids: list[int],
+                 dilations: dict[str, int],
+                 restrict_masks: bool,
+                 plot_masks: bool):
 
-    def setup_module(self, inputs: dict[str, object]) -> None:
-        """
-        Loads the ground-truth COCO mask datasets. Sets the module's fields for selected images and their file paths.
-        Adds a "dilation" to (potentially) each mask in the ground-truth masks for selected images.
+        self.gt_dataset_path = gt_dataset_path
+        self.gt_instance_segmentations_path = gt_instance_segmentations_path
+        self.images_path = images_path
 
-        Arguments:
-            inputs: A dictionary containing all the inputs for the module.
-                    The key is the variable name and the value is the variable's value.
-        """
-        self.gt_dataset_path: str = inputs['gt_dataset_path']
-        self.dt_dataset_path: str = inputs['dt_dataset_path']
-        self.gt_instance_segmentations_path: str = inputs['gt_instance_segmentations_path']
-        self.images_path: str = inputs['images_path']
+        self.selected_img_ids = selected_img_ids
 
-        self.selected_img_ids: list[int] = inputs['selected_image_ids']
+        self.category_name_to_dilation_size = dilations
+        self.restrict_masks = restrict_masks
+        self.plot_masks = plot_masks
 
-        self.dt_to_gt_category_names: dict[str, list[str]] = inputs['dt_to_gt_categories']
-
-        self.category_name_to_dilation_size = self.configs['dilations']
-        self.restrict_masks: bool = self.configs['restrict_masks']
-        self.plot_masks: bool = self.configs['plot_masks']
-
-        self.coco_dt = COCO(self.dt_dataset_path)
         self.coco_gt = COCO(self.gt_dataset_path)
         self.coco_gt_instances = COCO(self.gt_instance_segmentations_path)
 
-        selected_dt_category_names = inputs['selected_dt_categories']
-        selected_gt_category_names = list(set(chain.from_iterable(self.dt_to_gt_category_names.values())))
-        selected_dt_category_ids = [self.coco_dt.getCatIds(catNms=name)[0] for name in selected_dt_category_names]
-        selected_gt_category_ids = [self.coco_gt.getCatIds(catNms=name)[0] for name in selected_gt_category_names]
+        selected_gt_category_names = SELECTED_GT_CAT_NAMES
+        selected_gt_category_ids = SELECTED_GT_CAT_IDS
 
-        self.dt_tensor_dict: CocoTensorDict = CocoTensorDict(selected_dt_category_ids, selected_dt_category_names, self.selected_img_ids)
         self.gt_tensor_dict: CocoTensorDict = CocoTensorDict(selected_gt_category_ids, selected_gt_category_names, self.selected_img_ids)
         self.inst_tensor_dict: CocoTensorDict = CocoTensorDict([INSTANCE_ID], [INSTANCE_NAME], self.selected_img_ids)
-        self.dt_tensor_dict.extract_tensors_from_coco(self.coco_dt)
+
         self.gt_tensor_dict.extract_tensors_from_coco(self.coco_gt)
         self.inst_tensor_dict.extract_tensors_from_coco(self.coco_gt_instances)
 
-        self.category_id_to_dilation_structuring_element: dict[int, int] = {}
-        if self.restrict_masks:
-            self.gt_tensor_dict.set_instance_masks(self.inst_tensor_dict, INSTANCE_ID)
-        self._setup_gt_mask_dilations()
-        self.dilate_gt_masks(self.selected_img_ids)
-        if self.restrict_masks:
-            self.gt_tensor_dict.clip_by_instance_masks()
+        # self.category_id_to_dilation_structuring_element: dict[int, cv2.Mat] = {}
+        # if self.restrict_masks:
+        #     self.gt_tensor_dict.set_instance_masks(self.inst_tensor_dict, INSTANCE_ID)
+        # self._setup_gt_mask_dilations()
+        # self.dilate_gt_masks(self.selected_img_ids)
+        # if self.restrict_masks:
+        #     self.gt_tensor_dict.clip_by_instance_masks()
 
-        self._setup_dt_to_gt_mappings()
-
-    def run_module(self, inputs: dict[str, any]) -> dict[str, any]:
+    def run_module(self) -> tuple[dict[int, dict[str, float]], list[Figure]]:
         """
         Runs the coco mask scoring module which computes the Intersection over Union (IoU) score
         for all mask categories and COCO dataset image IDs specified.
@@ -138,14 +114,8 @@ class CocoMaskIoUScore(NeuraModule):
         to detected masks with IoU scores.
         This function assumes `setup_module()` has already been run.
 
-        Arguments:
-            inputs: A dictionary containing all the inputs for the module.
-                    The key is the variable name and the value is the variable's value.
-
+        TODO: Update returns
         Returns:
-            A dictionary containing the results of the module. The key is the variable name
-            and the value is the variable's value. All outputs must follow the IO standards
-            (see README for details).
         """
         iou_scores = self.compare_coco_iou()
         figs = None
@@ -154,23 +124,10 @@ class CocoMaskIoUScore(NeuraModule):
             for img_id in self.selected_img_ids:
                 fig_title = f'IoU Scores for img_id={img_id}'
                 figs.append(self.make_image_with_masks_figure(img_id, iou_scores[img_id], fig_title))
-        return {
-            'scores': iou_scores,
-            'figures': figs
-        }
+        return iou_scores, figs
 
-    def _setup_dt_to_gt_mappings(self):
-        self.dt_to_gt_category_ids: dict[int, list[int]] = {}
-        for dt_category_name in self.dt_tensor_dict.category_names:
-            dt_category_id = self.dt_tensor_dict.category_id_from_name(dt_category_name)
-            gt_category_names = self.dt_to_gt_category_names[dt_category_name]
-            gt_category_ids = self.gt_tensor_dict.category_ids_from_names(gt_category_names)
-            self.dt_to_gt_category_ids[dt_category_id] = gt_category_ids
-
-        self.gt_to_dt_category_ids: dict[int, list[int]] = {}
-        for dt_category_id in self.dt_to_gt_category_ids:
-            for gt_category_id in self.dt_to_gt_category_ids[dt_category_id]:
-                self.gt_to_dt_category_ids[gt_category_id] = [dt_category_id]
+    def get_merged_masks_across_categories(self, image_id: int) -> Tensor:
+        return self.gt_tensor_dict.get_merged_masks_across_categories(image_id)
 
     def _setup_gt_mask_dilations(self) -> None:
         """
@@ -189,7 +146,6 @@ class CocoMaskIoUScore(NeuraModule):
 
     def dilate_gt_masks(self, img_ids: list[int]) -> None:
         """
-        TODO: UPDATE/CHECK DESCRIPTION
         Adds a "dilation" to (potentially) each mask in the ground-truth mask COCO dataset
         under the selected image IDs according to `category_id_to_dilation_structuring_element`.
         This maps the COCO mask category IDs to structuring elements.
@@ -202,30 +158,6 @@ class CocoMaskIoUScore(NeuraModule):
             for category_id in self.category_id_to_dilation_structuring_element:
                 structuring_element = self.category_id_to_dilation_structuring_element[category_id]
                 self.gt_tensor_dict.dilate(img_id, category_id, structuring_element)
-
-    def compare_coco_iou(self) -> dict[int, dict[str, float]]:
-        """
-        Computes the "Intersection over Union" (IoU) score for selected categories
-        and images in the detected COCO dataset.
-
-        Returns:
-            A nested dictionary of IoU scores
-            by COCO image ID (int) and COCO mask category name (str).
-        """
-        img_scores_by_category = {}
-        dt_category_ids = self.dt_tensor_dict.category_ids
-        for img_id in self.selected_img_ids:
-            img_scores_by_category[img_id] = {}
-            for dt_category_id in dt_category_ids:
-                dt_category_name = self.dt_tensor_dict.category_name_from_id(dt_category_id)
-                gt_category_ids = self.dt_to_gt_category_ids[dt_category_id]
-                if len(gt_category_ids) == 0:
-                    img_scores_by_category[img_id][dt_category_name] = np.NaN
-                else:
-                    dt_merged_mask = merge_category_masks_in_image(self.dt_tensor_dict, [dt_category_id], img_id)
-                    gt_merged_mask = merge_category_masks_in_image(self.gt_tensor_dict, gt_category_ids, img_id)
-                    img_scores_by_category[img_id][dt_category_name] = torch_iou(dt_merged_mask, gt_merged_mask)
-        return img_scores_by_category
 
     def make_image_with_masks_figure(self,
                                      img_id: int,
@@ -376,7 +308,7 @@ def binary_mask_to_rle_np(binary_mask: ndarray) -> tuple[ndarray, list[int], int
     return rle, img_dimensions, area
 
 
-def create_dilation_structuring_element(dilation_radius: int) -> cv.Mat:
+def create_dilation_structuring_element(dilation_radius: int) -> cv2.Mat:
     """
     Creates a circular OpenCV structuring element of `dilation_radius` in pixels.
 
@@ -388,7 +320,7 @@ def create_dilation_structuring_element(dilation_radius: int) -> cv.Mat:
     """
     kernel_size = (2 * dilation_radius + 1, 2 * dilation_radius + 1)
     anchor = (dilation_radius, dilation_radius)
-    return cv.getStructuringElement(cv.MORPH_ELLIPSE, kernel_size, anchor)
+    return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, kernel_size, anchor)
 
 
 def torch_iou(mask1: Tensor, mask2: Tensor) -> float:
