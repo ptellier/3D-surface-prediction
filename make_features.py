@@ -12,7 +12,8 @@ TORCH_DEVICE = 'cuda'
 
 if __name__ == '__main__':
     manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
-    image, point_cloud_np_array, gt_annotations_, cluster_distances_np_array, num_neighbours_np_array = manual_dataset[EXAMPLE_INDEX]
+    # image, point_cloud_np_array, gt_annotations, cluster_distances_np_array, num_neighbours_np_array = manual_dataset[EXAMPLE_INDEX]
+    image, point_cloud_np_array, gt_annotations = manual_dataset[EXAMPLE_INDEX]
 
     pcd = pcd_img_to_o3d_pcd(point_cloud_np_array)
 
@@ -21,7 +22,8 @@ if __name__ == '__main__':
         lambda arr: 0.1,
         normal_estimation_radius=0.02,
         voxel_down_sample_size=0.01,
-        orientation_ref=np.array([0.0, 0.0, 1.0])
+        orientation_ref=np.array([0.0, 0.0, 1.0]),
+        gt_labels=None
     )
 
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
