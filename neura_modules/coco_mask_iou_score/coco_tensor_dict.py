@@ -90,6 +90,7 @@ class CocoTensorDict:
                 merged_tensor = merged_tensor + map_to_cat_id[category_id]*cat_mask
 
         merged_tensor[merged_tensor == 0] = -1
+        merged_tensor[merged_tensor > 3] = 3
         return merged_tensor
 
     @property

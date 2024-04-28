@@ -7,7 +7,7 @@ from utils.surface_normals import pcd_img_to_o3d_pcd
 from neura_modules.coco_mask_iou_score.coco_mask_iou_score import CocoMaskIoUScore
 
 DATASET_FOLDER_PATH = './datasets/manual_dataset/'
-EXAMPLE_INDEX = 1
+EXAMPLE_INDEX = 5
 TORCH_DEVICE = 'cpu'
 
 IMAGES_PATH = DATASET_FOLDER_PATH+'/images/'
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
     k = [1,2,3]
     cluster_normals.cluster_normals(radius=0.02, k=k)
-    cluster_normals.get_gt_labels()
+    print(cluster_normals.get_gt_labels().shape)
 
     # o3d.visualization.draw_geometries([cluster_normals.pcd])
 
