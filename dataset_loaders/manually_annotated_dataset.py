@@ -46,9 +46,9 @@ class ManuallyAnnotatedDataset(Dataset):
     def get_training_data(self, idx) -> tuple[ndarray, ndarray, ndarray]:
         image_file_name = self.coco.loadImgs(ids=[idx])[0]['file_name']
         file_number = find_last_int(image_file_name)
-        cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{str(file_number)}', CLUSTER_DISTANCES_DIR)
-        num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{str(file_number)}', NUMBER_OF_NEIGHBOURS_DIR)
-        labels_np_array = self.load_npy_file(f'labels_{str(file_number)}', GT_LABELS_DIR)
+        cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{idx}', CLUSTER_DISTANCES_DIR)
+        num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{idx}', NUMBER_OF_NEIGHBOURS_DIR)
+        labels_np_array = self.load_npy_file(f'gt_labels_downsampled_{idx}', GT_LABELS_DIR)
         return cluster_distances_np_array, num_neighbours_np_array, labels_np_array
 
     def load_npy_file(self, file_name: str, folder_name: str, shape=None) -> ndarray:
