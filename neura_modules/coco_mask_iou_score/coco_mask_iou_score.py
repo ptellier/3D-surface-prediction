@@ -13,12 +13,10 @@ from matplotlib.axes import Axes
 from torch import Tensor
 
 from neura_modules.coco_mask_iou_score.coco_tensor_dict import CocoTensorDict
-from neura_modules.utils.data_type import DataType
 
-CONFIGS_REQUIRED = [("plot_masks", DataType.BOOL), ("restrict_masks", DataType.BOOL), ("dilations", DataType.DICT_STRING_INT)]
-INPUTS_REQUIRED = ['dt_dataset_path', 'gt_dataset_path', 'gt_instance_segmentations_path', 'images_path', 'dt_to_gt_categories',
-                   'selected_dt_categories', 'selected_image_ids']
-OUTPUTS_AVAILABLE = ['scores', 'figures']
+SELECTED_GT_CAT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+SELECTED_GT_CAT_NAMES = ['convex', 'flat', 'spherical_grasp', 'edge', 'corner', 'flat_edge',
+                         'flat_corner', 'rod_like', 'convex_edge', 'convex_rim', 'unknown', 'bumpy']
 
 TORCH_DEVICE = 'cuda'
 
@@ -74,7 +72,6 @@ class CocoMaskIoUScore:
                  gt_instance_segmentations_path: str,
                  images_path: str,
                  selected_img_ids: list[int],
-                 dt_to_gt_categories: dict[str, list[str]],
                  dilations: dict[str, int],
                  restrict_masks: bool,
                  plot_masks: bool):
@@ -85,17 +82,15 @@ class CocoMaskIoUScore:
 
         self.selected_img_ids = selected_img_ids
 
-        self.dt_to_gt_category_names = dt_to_gt_categories
-
         self.category_name_to_dilation_size = dilations
-        self.restrict_masks: bool = restrict_masks
-        self.plot_masks: bool = plot_masks
+        self.restrict_masks = restrict_masks
+        self.plot_masks = plot_masks
 
         self.coco_gt = COCO(self.gt_dataset_path)
         self.coco_gt_instances = COCO(self.gt_instance_segmentations_path)
 
-        selected_gt_category_names = list(set(chain.from_iterable(self.dt_to_gt_category_names.values())))
-        selected_gt_category_ids = [self.coco_gt.getCatIds(catNms=name)[0] for name in selected_gt_category_names]
+        selected_gt_category_names = SELECTED_GT_CAT_NAMES
+        selected_gt_category_ids = SELECTED_GT_CAT_IDS
 
         self.gt_tensor_dict: CocoTensorDict = CocoTensorDict(selected_gt_category_ids, selected_gt_category_names, self.selected_img_ids)
         self.inst_tensor_dict: CocoTensorDict = CocoTensorDict([INSTANCE_ID], [INSTANCE_NAME], self.selected_img_ids)
@@ -103,15 +98,13 @@ class CocoMaskIoUScore:
         self.gt_tensor_dict.extract_tensors_from_coco(self.coco_gt)
         self.inst_tensor_dict.extract_tensors_from_coco(self.coco_gt_instances)
 
-        self.category_id_to_dilation_structuring_element: dict[int, cv2.Mat] = {}
-        if self.restrict_masks:
-            self.gt_tensor_dict.set_instance_masks(self.inst_tensor_dict, INSTANCE_ID)
-        self._setup_gt_mask_dilations()
-        self.dilate_gt_masks(self.selected_img_ids)
-        if self.restrict_masks:
-            self.gt_tensor_dict.clip_by_instance_masks()
-
-        self._setup_dt_to_gt_mappings()
+        # self.category_id_to_dilation_structuring_element: dict[int, cv2.Mat] = {}
+        # if self.restrict_masks:
+        #     self.gt_tensor_dict.set_instance_masks(self.inst_tensor_dict, INSTANCE_ID)
+        # self._setup_gt_mask_dilations()
+        # self.dilate_gt_masks(self.selected_img_ids)
+        # if self.restrict_masks:
+        #     self.gt_tensor_dict.clip_by_instance_masks()
 
     def run_module(self) -> tuple[dict[int, dict[str, float]], list[Figure]]:
         """
@@ -132,6 +125,9 @@ class CocoMaskIoUScore:
                 fig_title = f'IoU Scores for img_id={img_id}'
                 figs.append(self.make_image_with_masks_figure(img_id, iou_scores[img_id], fig_title))
         return iou_scores, figs
+
+    def get_merged_masks_across_categories(self, image_id: int) -> Tensor:
+        return self.gt_tensor_dict.get_merged_masks_across_categories(image_id)
 
     def _setup_gt_mask_dilations(self) -> None:
         """
