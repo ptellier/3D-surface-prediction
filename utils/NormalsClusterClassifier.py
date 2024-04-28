@@ -6,6 +6,8 @@ from torch import nn, Tensor, as_tensor
 BATCHES_BEFORE_PRINTING_LOSS = 10
 DEFAULT_DTYPE = torch.float32
 
+MIN_NUM_NEIGHBOURS = 5
+
 class NormalsClusterClassifier(nn.Module):
     """
     Use softmax linear regression to train and predict the 3D-surface class of points in a point cloud.
@@ -46,10 +48,14 @@ class NormalsClusterClassifier(nn.Module):
         prediction = self._linear.forward(X)
         return prediction
 
-    def fit(self, X: ndarray, y: ndarray):
+    def fit(self, X: ndarray, y: ndarray, num_neighbours: ndarray):
         h, w, d = X.shape
         X = self.cast(X.reshape(h*w, d))
         y = self.cast(y.reshape(h*w), dtype=torch.int64)
+        num_neighbours = self.cast(num_neighbours, dtype=torch.int64)
+        enough_neighbour_indexes = num_neighbours > MIN_NUM_NEIGHBOURS
+        X = X[enough_neighbour_indexes]
+        y = y[enough_neighbour_indexes]
         for iter_num in range(self._max_iter):
             self._optimizer.zero_grad()
             batch_indexes = torch.as_tensor(

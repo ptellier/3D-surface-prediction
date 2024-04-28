@@ -1,8 +1,7 @@
-from torch import Tensor
-
+import numpy as np
 from dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
 from neura_modules.coco_mask_iou_score.coco_mask_iou_score import CocoMaskIoUScore
-from utils.surface_normals import pcd_img_to_o3d_pcd
+from utils.NormalsClusterClassifier import NormalsClusterClassifier
 
 DATASET_FOLDER_PATH = './datasets/manual_dataset'
 TORCH_DEVICE = 'cuda'
@@ -30,7 +29,32 @@ if __name__ == '__main__':
         plot_masks=PLOT_MASKS
     )
 
+    all_cluster_distances = []
+    all_num_neighbours = []
+    all_labels = []
     for image_id in TRAINING_IMAGE_IDS:
         example = manual_dataset.get_training_data(idx=image_id)
-        cluster_distances_np_array, num_neighbours_np_array, labels_np_array = example
+        cluster_distances, num_neighbours, labels = example
+        all_cluster_distances.append(cluster_distances)
+        all_num_neighbours.append(num_neighbours)
+        all_labels.append(labels)
+
+    X_train = np.concatenate(all_cluster_distances)
+    y_train = np.concatenate(all_labels)
+    training_num_neighbours = np.concatenate(all_num_neighbours)
+
+    surface_classifier = NormalsClusterClassifier(
+        n_inputs=3,
+        n_classes=4,
+        max_iter=400,
+        learning_rate=0.05,
+        weight_decay=0.1,
+        init_scale=1,
+        batch_size=1000,
+        device=TORCH_DEVICE,
+    )
+
+    surface_classifier.fit(X_train, y_train, training_num_neighbours)
+
+
 
