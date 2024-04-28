@@ -33,6 +33,7 @@ class ClusterNormals:
         self._kd_tree = o3d_geom.KDTreeFlann(self._pc_downsampled)
         self._gt_labels = gt_labels
         self.image_id = image_id
+        print(len(self._pcd.points))
 
     """
         Finds nearest points within radius of anchor using kdtree. Iterates through to set each downsampled point as an anchor.
@@ -55,6 +56,7 @@ class ClusterNormals:
     """
     def cluster_normals(self, radius, k):
         n = len(self._pc_downsampled.points) # change this to len(self.pcd)
+        n=1
         # assuming k is always in order 1,2,3
 
         # per-cluster similarity which stores similarity for each anchor point based on the k in kmeans clustering

@@ -7,13 +7,13 @@ from utils.surface_normals import pcd_img_to_o3d_pcd
 from neura_modules.coco_mask_iou_score.coco_mask_iou_score import CocoMaskIoUScore
 
 DATASET_FOLDER_PATH = './datasets/manual_dataset/'
-EXAMPLE_INDEX = 1
+EXAMPLE_INDEX = 15
 TORCH_DEVICE = 'cpu'
 
 IMAGES_PATH = DATASET_FOLDER_PATH+'/images/'
 GT_DATASET_PATH = DATASET_FOLDER_PATH+'/annotations/surface_annotations.json'
 GT_INSTANCE_SEGMENTATIONS_PATH = DATASET_FOLDER_PATH+'/annotations/instance_segmentations.json'
-SELECTED_IMG_IDS = [1]
+SELECTED_IMG_IDS = [num for num in range(1,26)]
 GT_CATEGORY_TO_DILATION = {
     'edge': 0,
     'corner': 20,
@@ -25,7 +25,7 @@ PLOT_MASKS = False
 if __name__ == '__main__':
     manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
     # image, point_cloud_np_array, gt_annotations, cluster_distances_np_array, num_neighbours_np_array = manual_dataset[EXAMPLE_INDEX]
-    image, point_cloud_np_array, gt_annotations = manual_dataset[EXAMPLE_INDEX]
+    image, point_cloud_np_array, gt_annotations = manual_dataset.get_clustering_data(EXAMPLE_INDEX)
     coco_mask_iou_score = CocoMaskIoUScore(
         gt_dataset_path=GT_DATASET_PATH,
         gt_instance_segmentations_path=GT_INSTANCE_SEGMENTATIONS_PATH,
