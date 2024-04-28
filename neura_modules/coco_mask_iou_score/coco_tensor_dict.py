@@ -5,7 +5,7 @@ import cv2
 from pycocotools.coco import COCO
 from torch import Tensor, tensor, Size
 
-TORCH_DEVICE = 'cuda'
+TORCH_DEVICE = 'cpu'
 
 class CocoTensorDict:
 

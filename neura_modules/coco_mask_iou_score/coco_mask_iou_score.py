@@ -33,17 +33,7 @@ MAP_TO_CAT_ID = {
 }
 
 
-
-blah = {
-    'ingestible_shallow':  ['convex', 'corner', 'flat_edge', 'flat_corner', 'rod_like', 'convex_rim'],
-    'ingestible_medium':   [],
-    'ingestible_deep':     ['spherical_grasp'],
-    'flat':                ['flat', 'bumpy'],
-    'other':   ['edge', 'convex_edge']
-}
-
-
-TORCH_DEVICE = 'cuda'
+TORCH_DEVICE = 'cpu'
 
 INDEX_TO_COLOR = {  # RGB colors
     1:  array([0.411, 0.160, 0.768]),

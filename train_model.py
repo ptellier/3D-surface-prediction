@@ -10,13 +10,6 @@ IMAGES_PATH = DATASET_FOLDER_PATH+'/images/'
 GT_DATASET_PATH = DATASET_FOLDER_PATH+'/annotations/surface_annotations.json'
 GT_INSTANCE_SEGMENTATIONS_PATH = DATASET_FOLDER_PATH+'/annotations/instance_segmentations.json'
 SELECTED_IMG_IDS = [1]
-DT_TO_GT_CATEGORY_NAMES = {
-    'ingestible_shallow':  ['convex', 'corner', 'flat_edge', 'flat_corner', 'rod_like', 'convex_rim'],
-    'ingestible_medium':   [],
-    'ingestible_deep':     ['spherical_grasp'],
-    'flat':                ['flat', 'bumpy'],
-    'other':   ['edge', 'convex_edge']
-}
 GT_CATEGORY_TO_DILATION = {
     'edge': 0,
     'corner': 20,

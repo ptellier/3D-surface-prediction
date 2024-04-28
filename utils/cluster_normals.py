@@ -117,13 +117,13 @@ class ClusterNormals:
     returns: ground truth mask labels for all the points in the original pcd corresponding to each voxel 
     """
     def get_gt_labels(self):
-        gt_labels_downsampled = np.zeros(len(self._pc_downsampled.points))
+        gt_labels_downsampled = np.zeros(len(self._pc_downsampled.points), dtype=np.int32)
         pass
         for idx, indices in enumerate(self._downsample_index_trace):
             labels = []
             for i in indices:
                 labels.append(self._gt_labels[i])
-            gt_labels_downsampled[idx] = stats.mode(labels)[0][0]
+            gt_labels_downsampled[idx] = stats.mode(labels)[0]
         return gt_labels_downsampled
     
 
