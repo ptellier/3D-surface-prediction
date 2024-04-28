@@ -47,7 +47,8 @@ if __name__ == '__main__':
         normal_estimation_radius=0.02,
         voxel_down_sample_size=0.01,
         orientation_ref=np.array([0.0, 0.0, 1.0]),
-        gt_labels=gt_labels
+        gt_labels=gt_labels,
+        image_id = EXAMPLE_INDEX
     )
 
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
