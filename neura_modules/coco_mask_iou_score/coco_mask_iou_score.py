@@ -17,6 +17,31 @@ from neura_modules.coco_mask_iou_score.coco_tensor_dict import CocoTensorDict
 SELECTED_GT_CAT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 SELECTED_GT_CAT_NAMES = ['convex', 'flat', 'spherical_grasp', 'edge', 'corner', 'flat_edge',
                          'flat_corner', 'rod_like', 'convex_edge', 'convex_rim', 'unknown', 'bumpy']
+MAP_TO_CAT_ID = {
+    1: 1,  # convex
+    2: 1,  # flat
+    3: 3,  # spherical_grasp
+    4: 2,  # edge
+    5: 3,  # corner
+    6: 2,  # flat_edge
+    7: 3,  # flat_corner
+    8: 2,  # rod_like
+    9: 2,  # convex_edge
+    10: 2,  # convex_rim
+    11: 0,  # unknown
+    12: 1  # bumpy
+}
+
+
+
+blah = {
+    'ingestible_shallow':  ['convex', 'corner', 'flat_edge', 'flat_corner', 'rod_like', 'convex_rim'],
+    'ingestible_medium':   [],
+    'ingestible_deep':     ['spherical_grasp'],
+    'flat':                ['flat', 'bumpy'],
+    'other':   ['edge', 'convex_edge']
+}
+
 
 TORCH_DEVICE = 'cuda'
 
@@ -127,7 +152,7 @@ class CocoMaskIoUScore:
         return iou_scores, figs
 
     def get_merged_masks_across_categories(self, image_id: int) -> Tensor:
-        return self.gt_tensor_dict.get_merged_masks_across_categories(image_id)
+        return self.gt_tensor_dict.get_merged_masks_across_categories(image_id, MAP_TO_CAT_ID)
 
     def _setup_gt_mask_dilations(self) -> None:
         """

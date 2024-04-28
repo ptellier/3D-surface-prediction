@@ -82,12 +82,12 @@ class CocoTensorDict:
         dilated_tensors = [tensor(np_mask, dtype=torch.bool, device=TORCH_DEVICE) for np_mask in dilated_np_masks]
         self[image_id, category_id] = dilated_tensors
 
-    def get_merged_masks_across_categories(self, image_id: int):
+    def get_merged_masks_across_categories(self, image_id: int, map_to_cat_id: dict[int, int]):
         merged_tensor = torch.zeros(self.image_shape(image_id), dtype=torch.int, device=TORCH_DEVICE)
         for category_id in self._category_ids:
             cat_masks = self[image_id, category_id]
             for cat_mask in cat_masks:
-                merged_tensor = merged_tensor + category_id*cat_mask
+                merged_tensor = merged_tensor + map_to_cat_id[category_id]*cat_mask
 
         merged_tensor[merged_tensor == 0] = -1
         return merged_tensor
