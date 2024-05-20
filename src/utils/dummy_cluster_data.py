@@ -1,8 +1,7 @@
 import numpy as np
 from numpy import ndarray
-from torch import as_tensor
 
-from utils.NormalsClusterClassifier import NormalsClusterClassifier
+from src.utils.NormalsClusterClassifier import NormalsClusterClassifier
 
 TORCH_DEVICE = 'cuda'
 
@@ -27,7 +26,8 @@ def make_dummy_class_data(d: int) -> tuple[ndarray, ndarray]:
 
 
 if __name__ == '__main__':
-    dummy_feature_data, dummy_label_data = make_dummy_class_data(d=6)
+    X, y = make_dummy_class_data(d=6)
+    num_neighbours = np.full(size=y.shape, fill_value=10)
     surface_classifier = NormalsClusterClassifier(
         n_inputs=6,
         n_classes=4,
@@ -38,8 +38,6 @@ if __name__ == '__main__':
         batch_size=1000,
         device=TORCH_DEVICE,
     )
-
-    X, y = as_tensor(dummy_feature_data), as_tensor(dummy_label_data)
-    surface_classifier.fit(X, y)
+    surface_classifier.fit(X, y, num_neighbours)
     mask_predictions = surface_classifier.predict(X)
 

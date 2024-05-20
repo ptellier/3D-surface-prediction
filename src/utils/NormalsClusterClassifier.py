@@ -3,7 +3,7 @@ import torch
 from numpy import ndarray
 from torch import nn, Tensor, as_tensor
 
-BATCHES_BEFORE_PRINTING_LOSS = 10
+BATCHES_BEFORE_PRINTING_LOSS = 500
 DEFAULT_DTYPE = torch.float32
 
 MIN_NUM_NEIGHBOURS = 5
@@ -35,8 +35,10 @@ class NormalsClusterClassifier(nn.Module):
         self._device = device
         self.build()
 
-    def cast(self, np_array: ndarray, dtype=DEFAULT_DTYPE):
+    def cast(self, np_array: ndarray, dtype=DEFAULT_DTYPE, shape=None):
         """Make a tensor of `DEFAULT_DTYPE` from a numpy array stored onto `self._device`."""
+        if shape is not None:
+            np_array = np_array.reshape(shape)
         return as_tensor(np_array, dtype=dtype, device=self._device)
 
     def build(self):
@@ -49,9 +51,9 @@ class NormalsClusterClassifier(nn.Module):
         return prediction
 
     def fit(self, X: ndarray, y: ndarray, num_neighbours: ndarray):
-        h, w, d = X.shape
-        X = self.cast(X.reshape(h*w, d))
-        y = self.cast(y.reshape(h*w), dtype=torch.int64)
+        n, d = X.shape
+        X = self.cast(X)
+        y = self.cast(y, dtype=torch.int64)
         num_neighbours = self.cast(num_neighbours, dtype=torch.int64)
         enough_neighbour_indexes = num_neighbours > MIN_NUM_NEIGHBOURS
         X = X[enough_neighbour_indexes]
@@ -72,8 +74,8 @@ class NormalsClusterClassifier(nn.Module):
 
     def predict(self, X: ndarray):
         with torch.no_grad():
-            h, w, d = X.shape
-            X = self.cast(X.reshape(h*w, d))
+            n, d = X.shape
+            X = self.cast(X)
             Z = self(X)
-            predictions = torch.argmax(Z, dim=1).reshape(h, w)
+            predictions = torch.argmax(Z, dim=1)
             return predictions.cpu().numpy()

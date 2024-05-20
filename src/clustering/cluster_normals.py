@@ -4,7 +4,7 @@ import numpy as np
 from numpy import ndarray
 import open3d.geometry as o3d_geom
 from open3d.geometry import PointCloud
-from utils.surface_normals import estimate_surface_normals
+from src.utils.surface_normals import estimate_surface_normals
 from torch_kmeans import CosineSimilarity, SoftKMeans
 import torch 
 from scipy import stats
