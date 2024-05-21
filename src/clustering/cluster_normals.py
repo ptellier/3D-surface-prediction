@@ -33,7 +33,6 @@ class ClusterNormals:
         self._kd_tree = o3d_geom.KDTreeFlann(self._pc_downsampled)
         self._gt_labels = gt_labels
         self.image_id = image_id
-        print(len(self._pcd.points))
 
     """
         Finds nearest points within radius of anchor using kdtree. Iterates through to set each downsampled point as an anchor.
@@ -56,7 +55,7 @@ class ClusterNormals:
     """
     def cluster_normals(self, radius, k):
         n = len(self._pc_downsampled.points) # change this to len(self.pcd)
-        n=1
+        print(f"voxels:{n}")
         # assuming k is always in order 1,2,3
 
         # per-cluster similarity which stores similarity for each anchor point based on the k in kmeans clustering
@@ -89,8 +88,9 @@ class ClusterNormals:
                 # convert tensors to numpy array and save
                 pcs[a][K-1] = sum/len(selected_points)
         # self.save_downsampling_index_trace(file_path='./datasets/index_trace.pkl')
-        # np.save(f'./datasets/cluster_similarity_{self.image_id}', pcs)
-        # np.save(f'./datasets/neighbours_per_point_{self.image_id}', npp)
+        print(f"neighbors:{len(npp)}")
+        np.save(f'./datasets/cluster_similarity_{self.image_id}', pcs)
+        np.save(f'./datasets/neighbours_per_point_{self.image_id}', npp)
 
     
     def save_downsampling_index_trace(self, file_path: str):
@@ -125,8 +125,11 @@ class ClusterNormals:
             labels = []
             for i in indices:
                 labels.append(self._gt_labels[i])
-            gt_labels_downsampled[idx] = stats.mode(labels)[0]
-        # np.save(f'./datasets/gt_labels_downsampled_{self.image_id}', gt_labels_downsampled)
+            mode =  stats.mode(labels)[0]
+            if(mode > 3):
+                print(mode)
+            gt_labels_downsampled[idx] = mode
+        np.save(f'./datasets/gt_labels_downsampled_{self.image_id}', gt_labels_downsampled)
         return gt_labels_downsampled
     
 
