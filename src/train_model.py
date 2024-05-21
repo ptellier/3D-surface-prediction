@@ -3,9 +3,9 @@ from numpy import ndarray
 
 from src.dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
 from src.utils.NormalsClusterClassifier import NormalsClusterClassifier
+from src.constants import TORCH_DEVICE
 
 DATASET_FOLDER_PATH = '../datasets/manual_dataset'
-TORCH_DEVICE = 'cpu'
 
 IMAGES_PATH = DATASET_FOLDER_PATH+'/images/'
 GT_DATASET_PATH = DATASET_FOLDER_PATH+'/annotations/surface_annotations.json'

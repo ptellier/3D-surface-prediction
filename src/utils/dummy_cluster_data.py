@@ -1,9 +1,8 @@
 import numpy as np
 from numpy import ndarray
+from src.constants import TORCH_DEVICE
 
 from src.utils.NormalsClusterClassifier import NormalsClusterClassifier
-
-TORCH_DEVICE = 'cuda'
 
 def make_dummy_class_data(d: int) -> tuple[ndarray, ndarray]:
     patches_x = [(0, 640), (0, 640), (640, 1280), (640, 1280)]

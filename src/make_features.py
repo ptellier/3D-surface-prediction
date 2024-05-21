@@ -7,7 +7,6 @@ from neura_modules.coco_mask_iou_score import CocoMaskIoUScore, CocoMaskIoUScore
 
 DATASET_FOLDER_PATH = '../datasets/manual_dataset/'
 EXAMPLE_INDEX = 1
-TORCH_DEVICE = 'cuda'
 
 IMAGES_PATH = DATASET_FOLDER_PATH+'/images/'
 DT_DATASET_PATH = TODO
