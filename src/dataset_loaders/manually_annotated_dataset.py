@@ -7,6 +7,8 @@ from pycocotools.coco import COCO
 import os
 from torchvision.io import read_image
 
+from src.constants import MANUAL_DATASET_FOLDER_PATH
+
 DOWNLOAD_URL = 'https://drive.google.com/drive/folders/1-tls6KQyJnQQYwXv9Wmaoey3Bvvx3I3_?usp=drive_link'
 
 IMAGE_DIR = 'images'
@@ -18,14 +20,12 @@ NUMBER_OF_NEIGHBOURS_DIR = 'number_of_neighbours'
 GT_LABELS_DIR = 'labels'
 LAST_NUMBER_PATTERN = re.compile('\d+')
 
-DATASET_FOLDER_PATH = './datasets/manual_dataset/'
-
 
 class ManuallyAnnotatedDataset(Dataset):
     def __init__(self, folder_path: str):
-        if not os.path.isdir(DATASET_FOLDER_PATH):
+        if not os.path.isdir(MANUAL_DATASET_FOLDER_PATH):
             raise FileNotFoundError(
-                f'Please manually download and move the manual dataset into {DATASET_FOLDER_PATH} from {DOWNLOAD_URL}')
+                f'Please manually download and move the manual dataset into {MANUAL_DATASET_FOLDER_PATH} from {DOWNLOAD_URL}')
         self.folder_path = folder_path
         self.coco = COCO(os.path.join(self.folder_path, JSON_PATH))
 
@@ -51,10 +51,10 @@ class ManuallyAnnotatedDataset(Dataset):
             index: index for the training data to produce
 
         Returns:
-            cluster_distances_np_array: The average intra-cluster distances in point-wise clusterings of
-                                        point neighbourhoods in the pointcloud.
-            num_neighbours_np_array: The number of neighbours for each point when doing point-wise clusterings.
-            labels_np_array: The ground-truth 3D surface class for each point in the pointcloud.
+            cluster_distances_np_array -- The average intra-cluster distances in point-wise clusterings of
+                                          point neighbourhoods in the pointcloud.
+            num_neighbours_np_array -- The number of neighbours for each point when doing point-wise clusterings.
+            labels_np_array -- The ground-truth 3D surface class for each point in the pointcloud.
         """
         image_file_name = self.coco.loadImgs(ids=[index])[0]['file_name']
         file_number = find_last_int(image_file_name)
@@ -83,7 +83,7 @@ def find_last_int(string: str) -> int:
 def main():
     # NOTE**: index starts at 1
     index = 1
-    manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
+    manual_dataset = ManuallyAnnotatedDataset(folder_path=MANUAL_DATASET_FOLDER_PATH)
     image_1, point_cloud_np_array_1, mask_annotations_1, cluster_dist_1, num_neigh = manual_dataset[index]
 
     print('image_1: ')

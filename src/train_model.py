@@ -3,13 +3,11 @@ from numpy import ndarray
 
 from src.dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
 from src.utils.NormalsClusterClassifier import NormalsClusterClassifier
-from src.constants import TORCH_DEVICE
+from src.constants import TORCH_DEVICE, MANUAL_DATASET_FOLDER_PATH
 
-DATASET_FOLDER_PATH = '../datasets/manual_dataset'
-
-IMAGES_PATH = DATASET_FOLDER_PATH+'/images/'
-GT_DATASET_PATH = DATASET_FOLDER_PATH+'/annotations/surface_annotations.json'
-GT_INSTANCE_SEGMENTATIONS_PATH = DATASET_FOLDER_PATH+'/annotations/instance_segmentations.json'
+IMAGES_PATH = MANUAL_DATASET_FOLDER_PATH + '/images/'
+GT_DATASET_PATH = MANUAL_DATASET_FOLDER_PATH + '/annotations/surface_annotations.json'
+GT_INSTANCE_SEGMENTATIONS_PATH = MANUAL_DATASET_FOLDER_PATH + '/annotations/instance_segmentations.json'
 TRAINING_IMAGE_IDS = [1, 2]
 GT_CATEGORY_TO_DILATION = {
     'edge': 0,
@@ -19,7 +17,7 @@ RESTRICT_MASKS = True
 PLOT_MASKS = False
 
 def get_classifier_data(image_ids: list[int]) -> tuple[ndarray, ndarray, ndarray]:
-    manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
+    manual_dataset = ManuallyAnnotatedDataset(folder_path=MANUAL_DATASET_FOLDER_PATH)
 
     all_cluster_distances = []
     all_num_neighbours = []
