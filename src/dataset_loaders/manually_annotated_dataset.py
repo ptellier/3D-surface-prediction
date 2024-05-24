@@ -32,9 +32,9 @@ class ManuallyAnnotatedDataset(Dataset):
     def __len__(self):
         return len(self.coco.imgs)
 
-    def get_clustering_data(self, idx) -> tuple[Tensor, ndarray, dict]:
-        gt_mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[idx]))
-        image_file_name = self.coco.loadImgs(ids=[idx])[0]['file_name']
+    def get_clustering_data(self, index: int) -> tuple[Tensor, ndarray, dict]:
+        gt_mask_annotations = self.coco.loadAnns(self.coco.getAnnIds(imgIds=[index]))
+        image_file_name = self.coco.loadImgs(ids=[index])[0]['file_name']
         file_number = find_last_int(image_file_name)
         img_path = os.path.join(self.folder_path, IMAGE_DIR, image_file_name)
         image = read_image(img_path)
@@ -43,12 +43,24 @@ class ManuallyAnnotatedDataset(Dataset):
 
         return image, point_cloud_np_array, gt_mask_annotations
 
-    def get_training_data(self, idx) -> tuple[ndarray, ndarray, ndarray]:
-        image_file_name = self.coco.loadImgs(ids=[idx])[0]['file_name']
+    def get_training_data(self, index: int) -> tuple[ndarray, ndarray, ndarray]:
+        """
+        Returns the training data to train an ML model for a particular index.
+
+        Args:
+            index: index for the training data to produce
+
+        Returns:
+            cluster_distances_np_array: The average intra-cluster distances in point-wise clusterings of
+                                        point neighbourhoods in the pointcloud.
+            num_neighbours_np_array: The number of neighbours for each point when doing point-wise clusterings.
+            labels_np_array: The ground-truth 3D surface class for each point in the pointcloud.
+        """
+        image_file_name = self.coco.loadImgs(ids=[index])[0]['file_name']
         file_number = find_last_int(image_file_name)
-        cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{idx}', CLUSTER_DISTANCES_DIR)
-        num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{idx}', NUMBER_OF_NEIGHBOURS_DIR)
-        labels_np_array = self.load_npy_file(f'gt_labels_downsampled_{idx}', GT_LABELS_DIR)
+        cluster_distances_np_array = self.load_npy_file(f'cluster_similarity_{index}', CLUSTER_DISTANCES_DIR)
+        num_neighbours_np_array = self.load_npy_file(f'neighbours_per_point_{index}', NUMBER_OF_NEIGHBOURS_DIR)
+        labels_np_array = self.load_npy_file(f'gt_labels_downsampled_{index}', GT_LABELS_DIR)
         return cluster_distances_np_array, num_neighbours_np_array, labels_np_array
 
     def load_npy_file(self, file_name: str, folder_name: str, shape=None) -> ndarray:
@@ -68,7 +80,7 @@ def find_last_int(string: str) -> int:
     return int(last_number)
 
 
-if __name__ == '__main__':
+def main():
     # NOTE**: index starts at 1
     index = 1
     manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
@@ -93,3 +105,7 @@ if __name__ == '__main__':
     print('num_neighbours_1: ')
     print(num_neigh)
     print()
+
+
+if __name__ == '__main__':
+    main()

@@ -25,7 +25,7 @@ def get_classifier_data(image_ids: list[int]) -> tuple[ndarray, ndarray, ndarray
     all_num_neighbours = []
     all_labels = []
     for image_id in image_ids:
-        example = manual_dataset.get_training_data(idx=image_id)
+        example = manual_dataset.get_training_data(index=image_id)
         cluster_distances, num_neighbours, labels = example
         all_cluster_distances.append(cluster_distances)
         all_num_neighbours.append(num_neighbours)

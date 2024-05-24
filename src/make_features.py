@@ -31,7 +31,7 @@ PLOT_MASKS = False
 
 if __name__ == '__main__':
     manual_dataset = ManuallyAnnotatedDataset(folder_path=DATASET_FOLDER_PATH)
-    image, point_cloud_np_array, gt_annotations = manual_dataset.get_clustering_data(EXAMPLE_INDEX)
+    _, point_cloud_np_array, _ = manual_dataset.get_clustering_data(EXAMPLE_INDEX)
 
     inputs: CocoMaskIoUScoreInputs = dict(
         dt_dataset_path=DT_DATASET_PATH,
