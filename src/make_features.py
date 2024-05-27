@@ -2,7 +2,7 @@ import numpy as np
 
 from src.dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
 from src.clustering.cluster_normals import ClusterNormals
-from src.utils.surface_normals import pcd_img_to_o3d_pcd
+from nexera_packages.utilities.o3d_functions import pcd_img_to_o3d_pcd
 from neura_modules.coco_mask_iou_score import CocoMaskIoUScore, CocoMaskIoUScoreInputs
 
 DATASET_FOLDER_PATH = '../datasets/manual_dataset/'
