@@ -21,19 +21,19 @@ class ClusterNormals:
                  image_id=-1
                  ):
         self._pcd = pcd
-        self._pc_downsampled, self._downsample_index_trace = estimate_surface_normals(
+        self._pcd_downsampled, self._downsample_index_trace = estimate_surface_normals(
             self._pcd,
             voxel_down_sample_size=voxel_down_sample_size,
             normal_estimation_radius=normal_estimation_radius,
             orientation_ref=orientation_ref,
         )
-        self._kd_tree = o3d_geom.KDTreeFlann(self._pc_downsampled)
+        self._kd_tree = o3d_geom.KDTreeFlann(self._pcd_downsampled)
         self._gt_labels = gt_labels
         self.image_id = image_id
 
-    def find_knn_radius(self, anchor: int, radius: float):
+    def find_points_in_radius(self, anchor: int, radius: float):
         """
-        Finds the nearest points within a radius of an anchor point using a kd-tree.
+        Finds all the points within a radius of an anchor point using a kd-tree.
         Iterates through to set each downsampled point as an anchor.
 
         Arguments:
@@ -43,9 +43,10 @@ class ClusterNormals:
         Returns:
             Array of indices for voxels within the radius of the anchor point.
         """
-        num_points, idx, coordinates = self._kd_tree.search_radius_vector_3d(query=self._pc_downsampled.points[anchor],
-                                                                             radius=radius)
-        return idx
+        num_points, indices, coordinates = self._kd_tree.search_radius_vector_3d(
+            query=self._pcd_downsampled.points[anchor], radius=radius
+        )
+        return indices
 
     def cluster_normals(self, radius, k):
         """
@@ -55,11 +56,11 @@ class ClusterNormals:
             3. Cluster the estimated normals using k-means with k=1,2,3.
             4. Calculate the mean intra-cluster cosine similarity distance for each cluster.
         """
-        n = len(self._pc_downsampled.points)  # change this to len(self.pcd)
+        n = len(self._pcd_downsampled.points)
         print(f"voxels:{n}")
-        # assuming k is always in order 1,2,3
 
-        # per-cluster similarity which stores similarity for each anchor point based on the k in kmeans clustering
+        # Assume k is always in order 1, 2, 3
+        # Per-cluster similarity which stores similarity for each anchor point based on the k in kmeans clustering
         pcs = np.zeros((n, len(k)))
 
         # neighbours per point for each anchor point
@@ -67,12 +68,12 @@ class ClusterNormals:
         for a in range(n):
             r = radius
 
-            pc_in_radius_idx = self.find_knn_radius(anchor=a, radius=r)
+            pc_in_radius_idx = self.find_points_in_radius(anchor=a, radius=r)
             model = SoftKMeans(distance=CosineSimilarity, max_iter=100, verbose=PRINT_CLUSTERING_MESSAGES)
 
             # Normals of the points within the radius
             bs = 1
-            selected_points = np.asarray(self._pc_downsampled.normals)[pc_in_radius_idx]
+            selected_points = np.asarray(self._pcd_downsampled.normals)[pc_in_radius_idx]
             npp[a] = len(selected_points)
             if npp[a] <= 3:
                 pcs[a] = np.full(len(k), np.nan)
@@ -98,24 +99,22 @@ class ClusterNormals:
             index_trace_np_array_list = [np.asarray(int_vector) for int_vector in self._downsample_index_trace]
             pickle.dump(index_trace_np_array_list, f)
 
-    def get_gt_labels(self):
+    def get_downsampled_gt_labels(self) -> ndarray:
         """
-        Gets the indices for the original points in the point cloud from the downsampled voxel point which is stored
-        in self._pc_downsampled.points, looks at the ground truth mask labels for these points and takes the mode of these labels
-        as the true label value for the particular voxel. It does this for each voxel and return the true label values for all voxels.
+        Finds the ground-truth mask labels for all points in the downsampled point cloud. Does this by tracing the index
+        of each downsampled point to get its original point cloud point(s) and taking the mode of their ground-truth
+        labels.
 
         Returns:
-            Ground truth mask labels for all the points in the original pcd corresponding to each voxel.
+            Ground-truth mask labels for all the points in the downsampled point cloud.
         """
-        gt_labels_downsampled = np.zeros(len(self._pc_downsampled.points), dtype=np.int32)
-        for idx, indices in enumerate(self._downsample_index_trace):
+        gt_labels_downsampled = np.zeros(len(self._pcd_downsampled.points), dtype=np.int32)
+        for downsampled_index, orig_indices in enumerate(self._downsample_index_trace):
             labels = []
-            for i in indices:
-                labels.append(self._gt_labels[i])
-            mode =  stats.mode(labels)[0]
-            if mode > 3:
-                print(mode)
-            gt_labels_downsampled[idx] = mode
+            for orig_index in orig_indices:
+                labels.append(self._gt_labels[orig_index])
+            mode = stats.mode(labels)[0]
+            gt_labels_downsampled[downsampled_index] = mode
         np.save(f'./datasets/gt_labels_downsampled_{self.image_id}', gt_labels_downsampled)
         return gt_labels_downsampled
 
@@ -124,11 +123,11 @@ class ClusterNormals:
         return self._pcd
     
     @property
-    def pc_downsampled(self):
-        return self._pc_downsampled
+    def pcd_downsampled(self):
+        return self._pcd_downsampled
 
 
-def k_means_one_cluster(x: ndarray):
+def k_means_one_cluster(x: ndarray) -> float:
     """
     Performs k-means clustering with k=1 on some examples `x` based on cosine similarity.
 

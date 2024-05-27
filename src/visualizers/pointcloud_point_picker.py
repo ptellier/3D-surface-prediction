@@ -1,9 +1,9 @@
+from numpy import ndarray
 import open3d as o3d
 import open3d.visualization
 
 from src.dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
 from nexera_packages.utilities.o3d_functions import pcd_img_to_o3d_pcd
-from numpy import ndarray
 
 from src.constants import MANUAL_DATASET_FOLDER_PATH
 INDEX_TO_GRAB = 1
