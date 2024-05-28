@@ -1,6 +1,6 @@
-from numpy import ndarray
 import open3d as o3d
 import open3d.visualization
+from open3d.geometry import PointCloud
 
 from src.dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedDataset
 from nexera_packages.utilities.o3d_functions import pcd_img_to_o3d_pcd
@@ -9,8 +9,7 @@ from src.constants import MANUAL_DATASET_FOLDER_PATH
 INDEX_TO_GRAB = 1
 
 
-def run_pointcloud_point_picker(pcd_np_array: ndarray, rgb_img: ndarray = None) -> list[int]:
-    pcd = pcd_img_to_o3d_pcd(pcd_np_array, rgb_img)
+def run_pointcloud_point_picker(pcd: PointCloud) -> list[int]:
     vis = o3d.visualization.VisualizerWithEditing()
     vis.create_window()
     vis.add_geometry(pcd)
@@ -21,7 +20,8 @@ def run_pointcloud_point_picker(pcd_np_array: ndarray, rgb_img: ndarray = None) 
 def main():
     manual_dataset = ManuallyAnnotatedDataset(folder_path=MANUAL_DATASET_FOLDER_PATH)
     image, point_cloud_np_array, gt_mask_annotations = manual_dataset.get_clustering_data(INDEX_TO_GRAB)
-    run_pointcloud_point_picker(point_cloud_np_array)
+    pcd = pcd_img_to_o3d_pcd(point_cloud_np_array)
+    run_pointcloud_point_picker(pcd)
 
 
 if __name__ == '__main__':

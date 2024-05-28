@@ -3,6 +3,7 @@ import numpy as np
 from numpy import ndarray, array
 import open3d.geometry as o3d_geom
 from open3d.geometry import PointCloud
+from open3d.utility import IntVector
 from src.utils.surface_normals import estimate_surface_normals
 from torch_kmeans import CosineSimilarity, SoftKMeans
 import torch 
@@ -31,13 +32,13 @@ class ClusterNormals:
         self._gt_labels = gt_labels
         self.image_id = image_id
 
-    def find_points_in_radius(self, anchor: int, radius: float):
+    def find_points_in_radius(self, anchor: int, radius: float) -> IntVector:
         """
         Finds all the points within a radius of an anchor point using a kd-tree.
         Iterates through to set each downsampled point as an anchor.
 
         Arguments:
-            anchor: Index of anchor in self._pc_downsampled.
+            anchor: Index of anchor point in `self._pcd_downsampled`.
             radius: Radius within which we want to look for points around the anchor.
 
         Returns:
