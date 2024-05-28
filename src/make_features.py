@@ -15,7 +15,7 @@ EXAMPLE_INDEX = 1
 
 DT_DATASET_PATH = DUMMY_DETECTED_DATASET_ANNOTATIONS_PATH  # TODO: figure out how to handle this better
 SELECTED_DT_CATEGORIES = ['ingestible_shallow', 'ingestible_medium', 'flat', 'other']
-SELECTED_IMG_IDS = [num for num in range(1, 26)]
+SELECTED_IMG_IDS = [num for num in range(1, 1+1)]
 RESTRICT_MASKS = True
 PLOT_MASKS = False
 
