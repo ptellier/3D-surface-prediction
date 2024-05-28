@@ -14,7 +14,7 @@ class TimeDiffPrinter:
         t2 = datetime.now()
         time_diff = t2 - self._t
         self._t = t2
-        print(*args, f'time diff: {time_diff.seconds}s')
+        print(*args, f'time diff: {time_diff.total_seconds():.3f}s')
 
 
 def time_func():

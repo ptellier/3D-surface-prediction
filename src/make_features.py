@@ -9,6 +9,7 @@ from src.dataset_loaders.manually_annotated_dataset import ManuallyAnnotatedData
 from src.clustering.cluster_normals import ClusterNormals
 from nexera_packages.utilities.o3d_functions import pcd_img_to_o3d_pcd
 from neura_modules.coco_mask_iou_score import CocoMaskIoUScore, CocoMaskIoUScoreInputs
+from src.utils.time_diff import TimeDiffPrinter
 
 EXAMPLE_INDEX = 1
 
@@ -48,11 +49,19 @@ def get_manual_dataset_gt_labels() -> ndarray:
 
 
 def main():
+    time_printer = TimeDiffPrinter()
+    time_printer.start()
     manual_dataset = ManuallyAnnotatedDataset(folder_path=MANUAL_DATASET_FOLDER_PATH)
+    time_printer.print('Loaded manual dataset')
+
     _, point_cloud_np_array, _ = manual_dataset.get_clustering_data(EXAMPLE_INDEX)
+    time_printer.print('Retrieved a clustering datum')
 
     gt_labels = get_manual_dataset_gt_labels()
+    time_printer.print('Get G.T. labels')
+
     pcd = pcd_img_to_o3d_pcd(point_cloud_np_array)
+    time_printer.print('Make numpy array and image array into a pointcloud object')
 
     cluster_normals = ClusterNormals(
         pcd,
@@ -62,6 +71,7 @@ def main():
         gt_labels=gt_labels,
         image_id=EXAMPLE_INDEX
     )
+    time_printer.print('Estimate surface normals and construct kd-tree')
 
     cluster_normals.pcd.paint_uniform_color([0.5, 0.5, 0.5])
     k = [1, 2, 3]
